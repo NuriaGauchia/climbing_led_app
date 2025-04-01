@@ -25,6 +25,33 @@ class _RoutesListPageState extends State<RoutesListPage> {
     });
   }
 
+  Future<void> confirmDelete(int index) async {
+    final route = routes[index];
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Eliminar bloque?'),
+        content: Text('¿Seguro que quieres eliminar "${route.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await RouteStorageService.deleteRouteAtIndex(index);
+      await loadRoutes();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,11 +65,25 @@ class _RoutesListPageState extends State<RoutesListPage> {
                 return ListTile(
                   title: Text(route.name),
                   subtitle: Text('Dificultad: ${route.grade}'),
-                  trailing: const Icon(Icons.edit),
-                  onTap: () {
-                    // Enlazar a edición más adelante
-                    Navigator.pushNamed(context, '/edit');
-                  },
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/edit',
+                            arguments: {'index': index, 'route': route},
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => confirmDelete(index),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
