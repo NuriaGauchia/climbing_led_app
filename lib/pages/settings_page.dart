@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const bool isAdmin = true;  // Cambia a false para ocultar funciones
+const bool isAdmin = true;
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -26,17 +26,14 @@ class SettingsPage extends StatelessWidget {
               leading: const Icon(Icons.camera_alt),
               title: const Text('Escanear muro'),
               onTap: () {
-                // Aquí pondrás la navegación al escaneo
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Función Escanear muro (próximamente)')),
-                );
+                Navigator.pushNamed(context, '/scan'); // ✅ va a la pantalla
               },
             ),
             ListTile(
               leading: const Icon(Icons.edit),
               title: const Text('Editar muro'),
               onTap: () {
-                // Aquí pondrás la navegación al editor
+                // Por ahora solo simulado, más adelante implementamos
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Función Editar muro (próximamente)')),
                 );
@@ -61,3 +58,4 @@ class SettingsPage extends StatelessWidget {
     );
   }
 }
+
