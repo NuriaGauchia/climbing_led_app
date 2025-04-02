@@ -120,6 +120,19 @@ class _HomePageState extends State<HomePage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
+                              icon: Icon(
+                                route.done
+                                    ? Icons.check_box
+                                    : Icons.check_box_outline_blank,
+                                color: route.done ? Colors.green : null,
+                              ),
+                              onPressed: () async {
+                                final updated = route.copyWith(done: !route.done);
+                                await RouteStorageService.updateRouteAtIndex(index, updated);
+                                await loadRoutes();
+                              },
+                            ),
+                            IconButton(
                               icon: const Icon(Icons.edit),
                               onPressed: () {
                                 Navigator.pushNamed(
@@ -176,3 +189,4 @@ class FilterModal extends StatelessWidget {
     );
   }
 }
+
