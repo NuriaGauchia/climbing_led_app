@@ -5,7 +5,6 @@ import '../pages/wall_editor_page.dart';
 import '../pages/create_route_page.dart';
 import '../pages/settings_page.dart';
 import '../pages/auth_page.dart';
-import '../pages/routes_list_page.dart';
 import '../pages/edit_route_page.dart';
 
 
@@ -17,7 +16,6 @@ class AppRoutes {
     '/create': (context) => const CreateRoutePage(),
     '/settings': (context) => const SettingsPage(),
     '/auth': (context) => const AuthPage(),
-    '/routes': (context) => const RoutesListPage(),
     '/edit': (context) => const EditRoutePage(),
   };
 }
