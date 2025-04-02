@@ -19,6 +19,23 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
   WallConfig? wallConfig;
   bool isLoading = true;
 
+  final List<String> grades = [
+    '?',
+    'V+',
+    '6a', '6a+',
+    '6b', '6b+',
+    '6c', '6c/+', '6c+',
+    '7a', '7a+',
+    '7b', '7b+',
+    '7c', '7c+',
+    '8a', '8a+',
+    '8b', '8b+',
+    '8c', '8c+',
+    '9a', '9a+',
+    '9b', '9b+',
+    '9c',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -61,7 +78,7 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
       const SnackBar(content: Text("Bloque guardado")),
     );
 
-    Navigator.pop(context, true); // ✅ Importante: indica que se guardó
+    Navigator.pop(context, true); // ✅ Devuelve true para refrescar
   }
 
   @override
@@ -106,15 +123,39 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextField(
                   controller: nameController,
                   decoration: const InputDecoration(labelText: 'Nombre del bloque'),
                 ),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: gradeController,
-                  decoration: const InputDecoration(labelText: 'Dificultad (ej: 6A, 7B+)'),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: 160, // ajusta el ancho según tu diseño
+                    child: DropdownButtonFormField<String>(
+                      value: gradeController.text.isNotEmpty ? gradeController.text : null,
+                      items: grades.map((grade) {
+                        return DropdownMenuItem(
+                          value: grade,
+                          child: Text(grade),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            gradeController.text = value;
+                          });
+                        }
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Dificultad',
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 const Text('Toca las presas activas para seleccionarlas'),
