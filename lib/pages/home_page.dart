@@ -140,8 +140,11 @@ class _HomePageState extends State<HomePage> {
                   },
                 ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/create');
+        onPressed: () async {
+          final result = await Navigator.pushNamed(context, '/create');
+          if (result == true) {
+            await loadRoutes(); // ✅ recarga si se creó un bloque
+          }
         },
         child: const Icon(Icons.add),
       ),

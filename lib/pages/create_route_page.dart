@@ -61,7 +61,7 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
       const SnackBar(content: Text("Bloque guardado")),
     );
 
-    Navigator.pop(context);
+    Navigator.pop(context, true); // ✅ Importante: indica que se guardó
   }
 
   @override
@@ -135,7 +135,7 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
                 final isSelected = selectedHolds.contains(index);
 
                 if (!isAvailable) {
-                  return const SizedBox.shrink(); // No mostrar presas sin LED
+                  return const SizedBox.shrink();
                 }
 
                 return GestureDetector(
