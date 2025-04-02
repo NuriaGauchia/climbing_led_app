@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../models/wall_config_model.dart';
+import '../services/wall_config_service.dart';
 
 class ScanWallPage extends StatefulWidget {
   const ScanWallPage({super.key});
@@ -28,6 +30,22 @@ class _ScanWallPageState extends State<ScanWallPage> {
     }
   }
 
+  Future<void> saveWallConfig() async {
+    final config = WallConfig(
+      rows: numRows,
+      cols: numCols,
+      activeCells: activeCells.toList(),
+    );
+
+    await WallConfigService.saveConfig(config);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Muro guardado')),
+    );
+
+    Navigator.pop(context);
+  }
+
   void toggleCell(int index) {
     setState(() {
       if (activeCells.contains(index)) {
@@ -36,17 +54,6 @@ class _ScanWallPageState extends State<ScanWallPage> {
         activeCells.add(index);
       }
     });
-  }
-
-  void saveWallConfig() {
-    // Aquí puedes guardar en SharedPreferences o Firebase
-    print('Guardando muro: $numRows x $numCols');
-    print('Presas con LED: $activeCells');
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Muro guardado')),
-    );
-    Navigator.pop(context);
   }
 
   @override
