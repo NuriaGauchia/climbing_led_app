@@ -1,21 +1,32 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import '../models/wall_config_model.dart';
 
 class WallConfigService {
-  static const String key = 'wall_config';
-
-  static Future<void> saveConfig(WallConfig config) async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonStr = json.encode(config.toJson());
-    await prefs.setString(key, jsonStr);
+  static Future<File> _getFile() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/wall_config.json');
   }
 
   static Future<WallConfig?> loadConfig() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonStr = prefs.getString(key);
-    if (jsonStr == null) return null;
-    final jsonMap = json.decode(jsonStr);
-    return WallConfig.fromJson(jsonMap);
+    final file = await _getFile();
+    if (!await file.exists()) return null;
+
+    final json = await file.readAsString();
+    return WallConfig.fromJson(jsonDecode(json));
+  }
+
+  static Future<void> saveConfig(WallConfig config) async {
+    final file = await _getFile();
+    final json = jsonEncode(config.toJson());
+    await file.writeAsString(json);
+  }
+
+  static Future<void> clearConfig() async {
+    final file = await _getFile();
+    if (await file.exists()) {
+      await file.delete();
+    }
   }
 }

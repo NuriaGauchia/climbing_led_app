@@ -70,6 +70,7 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
       name: nameController.text,
       grade: gradeController.text,
       holds: selectedHolds.toList(),
+      creator: 'nuria_dev', // 👈 Simulación temporal
     );
 
     await RouteStorageService.saveRoute(route);
@@ -78,7 +79,7 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
       const SnackBar(content: Text("Bloque guardado")),
     );
 
-    Navigator.pop(context, true); // ✅ Devuelve true para refrescar
+    Navigator.pop(context, true);
   }
 
   @override
@@ -133,7 +134,7 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: SizedBox(
-                    width: 160, // ajusta el ancho según tu diseño
+                    width: 160,
                     child: DropdownButtonFormField<String>(
                       value: gradeController.text.isNotEmpty ? gradeController.text : null,
                       items: grades.map((grade) {

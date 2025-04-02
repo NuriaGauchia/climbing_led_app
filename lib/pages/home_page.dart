@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/route_model.dart';
 import '../services/route_storage_service.dart';
+import '../filters/route_filter.dart';
+import '../widgets/filter_modal.dart';
+import '../constants/grades.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,7 +14,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<ClimbingRoute> routes = [];
+  List<ClimbingRoute> filteredRoutes = [];
   bool isLoading = true;
+
+  RouteFilter filter = RouteFilter();
 
   @override
   void initState() {
@@ -26,12 +32,30 @@ class _HomePageState extends State<HomePage> {
     final loaded = await RouteStorageService.loadRoutes();
     setState(() {
       routes = loaded;
+      filteredRoutes = applyFilters(routes, filter, kClimbingGrades);
       isLoading = false;
     });
   }
 
+  void openFilterModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => FilterModal(
+        filter: filter,
+        onApply: (newFilter) {
+          setState(() {
+            filter = newFilter;
+            filteredRoutes = applyFilters(routes, filter, kClimbingGrades);
+          });
+        },
+      ),
+    );
+  }
+
   Future<void> confirmDelete(int index) async {
-    final route = routes[index];
+    final route = filteredRoutes[index];
+    final realIndex = routes.indexOf(route);
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -52,16 +76,9 @@ class _HomePageState extends State<HomePage> {
     );
 
     if (confirm == true) {
-      await RouteStorageService.deleteRouteAtIndex(index);
+      await RouteStorageService.deleteRouteAtIndex(realIndex);
       await loadRoutes();
     }
-  }
-
-  void openFilterModal() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => const FilterModal(),
-    );
   }
 
   @override
@@ -105,30 +122,29 @@ class _HomePageState extends State<HomePage> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : routes.isEmpty
-              ? const Center(child: Text('No hay bloques aún.'))
+          : filteredRoutes.isEmpty
+              ? const Center(child: Text('No hay bloques que coincidan con los filtros.'))
               : ListView.builder(
-                  itemCount: routes.length,
+                  itemCount: filteredRoutes.length,
                   itemBuilder: (context, index) {
-                    final route = routes[index];
+                    final route = filteredRoutes[index];
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       child: ListTile(
                         title: Text(route.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Dificultad: ${route.grade}'),
+                        subtitle: Text('Dificultad: ${route.grade} · Creador: ${route.creator}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
                               icon: Icon(
-                                route.done
-                                    ? Icons.check_box
-                                    : Icons.check_box_outline_blank,
+                                route.done ? Icons.check_box : Icons.check_box_outline_blank,
                                 color: route.done ? Colors.green : null,
                               ),
                               onPressed: () async {
                                 final updated = route.copyWith(done: !route.done);
-                                await RouteStorageService.updateRouteAtIndex(index, updated);
+                                final realIndex = routes.indexOf(route);
+                                await RouteStorageService.updateRouteAtIndex(realIndex, updated);
                                 await loadRoutes();
                               },
                             ),
@@ -138,7 +154,7 @@ class _HomePageState extends State<HomePage> {
                                 Navigator.pushNamed(
                                   context,
                                   '/edit',
-                                  arguments: {'index': index, 'route': route},
+                                  arguments: {'index': routes.indexOf(route), 'route': route},
                                 );
                               },
                             ),
@@ -156,7 +172,7 @@ class _HomePageState extends State<HomePage> {
         onPressed: () async {
           final result = await Navigator.pushNamed(context, '/create');
           if (result == true) {
-            await loadRoutes(); // ✅ recarga si se creó un bloque
+            await loadRoutes();
           }
         },
         child: const Icon(Icons.add),
@@ -164,29 +180,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
-// 🌟 Modal de filtro (por ahora con contenido placeholder)
-class FilterModal extends StatelessWidget {
-  const FilterModal({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('Filtrar bloques', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          const Text('Aquí podrás filtrar por dificultad, creador, etc.'),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/wall_config_model.dart';
 import '../services/wall_config_service.dart';
 
@@ -64,38 +63,6 @@ class _WallEditorPageState extends State<WallEditorPage> {
     Navigator.pop(context);
   }
 
-  Future<void> resetWall() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Resetear muro?'),
-        content: const Text('Esto eliminará toda la configuración del muro. ¿Estás segura?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Resetear', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('wall_config');
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Muro eliminado')),
-        );
-        Navigator.pop(context);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -152,20 +119,10 @@ class _WallEditorPageState extends State<WallEditorPage> {
           ),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: saveWall,
-                  icon: const Icon(Icons.save),
-                  label: const Text('Guardar muro'),
-                ),
-                const SizedBox(height: 12),
-                TextButton.icon(
-                  onPressed: resetWall,
-                  icon: const Icon(Icons.delete_forever),
-                  label: const Text('Resetear muro'),
-                ),
-              ],
+            child: ElevatedButton.icon(
+              onPressed: saveWall,
+              icon: const Icon(Icons.save),
+              label: const Text('Guardar muro'),
             ),
           ),
         ],
@@ -173,4 +130,3 @@ class _WallEditorPageState extends State<WallEditorPage> {
     );
   }
 }
-

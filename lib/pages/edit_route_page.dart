@@ -52,10 +52,14 @@ class _EditRoutePageState extends State<EditRoutePage> {
   Future<void> saveEditedRoute() async {
     if (nameController.text.isEmpty || gradeController.text.isEmpty) return;
 
+    final args = ModalRoute.of(context)!.settings.arguments as Map;
+    final ClimbingRoute originalRoute = args['route'];
+
     final edited = ClimbingRoute(
       name: nameController.text,
       grade: gradeController.text,
       holds: selectedHolds.toList(),
+      creator: originalRoute.creator,
     );
 
     await RouteStorageService.updateRouteAtIndex(routeIndex, edited);

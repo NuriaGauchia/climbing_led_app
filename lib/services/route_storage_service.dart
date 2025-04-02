@@ -1,50 +1,59 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import '../models/route_model.dart';
 
 class RouteStorageService {
-  static const String key = 'climbing_routes';
-
-  // Cargar todos los bloques guardados
-  static Future<List<ClimbingRoute>> loadRoutes() async {
-    final prefs = await SharedPreferences.getInstance();
-    final data = prefs.getStringList(key) ?? [];
-    return data.map((jsonStr) {
-      final jsonMap = json.decode(jsonStr);
-      return ClimbingRoute.fromJson(jsonMap);
-    }).toList();
+  static Future<File> _getFile() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/routes.json');
   }
 
-  // Guardar un nuevo bloque
-  static Future<void> saveRoute(ClimbingRoute route) async {
-    final prefs = await SharedPreferences.getInstance();
+  static Future<List<ClimbingRoute>> loadRoutes() async {
+    final file = await _getFile();
+    if (!await file.exists()) return [];
+
+    final json = await file.readAsString();
+    final list = jsonDecode(json) as List;
+    return list.map((e) => ClimbingRoute.fromJson(e)).toList();
+  }
+
+  static Future<void> saveRoutes(List<ClimbingRoute> routes) async {
+    final file = await _getFile();
+    final json = jsonEncode(routes.map((e) => e.toJson()).toList());
+    await file.writeAsString(json);
+  }
+
+  static Future<void> addRoute(ClimbingRoute route) async {
     final routes = await loadRoutes();
     routes.add(route);
-    final jsonList = routes.map((r) => json.encode(r.toJson())).toList();
-    await prefs.setStringList(key, jsonList);
+    await saveRoutes(routes);
   }
 
-  // Actualizar un bloque existente por su posición en la lista
+  static Future<void> saveRoute(ClimbingRoute route) async {
+    await addRoute(route); // reutiliza addRoute para mantener consistencia
+  }
+
   static Future<void> updateRouteAtIndex(int index, ClimbingRoute updated) async {
-    final prefs = await SharedPreferences.getInstance();
     final routes = await loadRoutes();
-
-    if (index < 0 || index >= routes.length) return;
-
-    routes[index] = updated;
-    final jsonList = routes.map((r) => json.encode(r.toJson())).toList();
-    await prefs.setStringList(key, jsonList);
+    if (index >= 0 && index < routes.length) {
+      routes[index] = updated;
+      await saveRoutes(routes);
+    }
   }
 
-  // Eliminar un bloque por su índice
   static Future<void> deleteRouteAtIndex(int index) async {
-    final prefs = await SharedPreferences.getInstance();
     final routes = await loadRoutes();
+    if (index >= 0 && index < routes.length) {
+      routes.removeAt(index);
+      await saveRoutes(routes);
+    }
+  }
 
-    if (index < 0 || index >= routes.length) return;
-
-    routes.removeAt(index);
-    final jsonList = routes.map((r) => json.encode(r.toJson())).toList();
-    await prefs.setStringList(key, jsonList);
+  static Future<void> clearAllRoutes() async {
+    final file = await _getFile();
+    if (await file.exists()) {
+      await file.delete();
+    }
   }
 }
