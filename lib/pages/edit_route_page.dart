@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/route_model.dart';
+import '../models/wall_config_model.dart';
 import '../services/route_storage_service.dart';
+import '../services/wall_config_service.dart';
 
 class EditRoutePage extends StatefulWidget {
   const EditRoutePage({super.key});
@@ -12,8 +14,11 @@ class EditRoutePage extends StatefulWidget {
 class _EditRoutePageState extends State<EditRoutePage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController gradeController = TextEditingController();
+
   Set<int> selectedHolds = {};
   int routeIndex = -1;
+  WallConfig? wallConfig;
+  bool isLoading = true;
 
   @override
   void didChangeDependencies() {
@@ -25,6 +30,13 @@ class _EditRoutePageState extends State<EditRoutePage> {
     nameController.text = route.name;
     gradeController.text = route.grade;
     selectedHolds = route.holds.toSet();
+
+    WallConfigService.loadConfig().then((config) {
+      setState(() {
+        wallConfig = config;
+        isLoading = false;
+      });
+    });
   }
 
   void toggleHold(int index) {
@@ -57,6 +69,25 @@ class _EditRoutePageState extends State<EditRoutePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (wallConfig == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Editar bloque')),
+        body: const Center(
+          child: Text(
+            'Primero debes escanear y configurar el muro en Ajustes.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    final totalCells = wallConfig!.rows * wallConfig!.cols;
+    final activeCells = wallConfig!.activeCells;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Editar bloque')),
       body: Column(
@@ -82,14 +113,18 @@ class _EditRoutePageState extends State<EditRoutePage> {
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: wallConfig!.cols,
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
               ),
-              itemCount: 25,
+              itemCount: totalCells,
               itemBuilder: (context, index) {
+                final isAvailable = activeCells.contains(index);
                 final isSelected = selectedHolds.contains(index);
+
+                if (!isAvailable) return const SizedBox.shrink();
+
                 return GestureDetector(
                   onTap: () => toggleHold(index),
                   child: Container(

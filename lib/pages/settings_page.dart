@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_config.dart';
 
 const bool isAdmin = true;
 
@@ -11,6 +12,12 @@ class SettingsPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Ajustes')),
       body: ListView(
         children: [
+          ListTile(
+            leading: const Icon(Icons.wallpaper),
+            title: Text('Muro activo: $wallName'),
+          ),
+          const Divider(),
+
           const ListTile(
             title: Text('Preferencias'),
             subtitle: Text('Aquí podrías poner configuración general'),
@@ -26,17 +33,14 @@ class SettingsPage extends StatelessWidget {
               leading: const Icon(Icons.camera_alt),
               title: const Text('Escanear muro'),
               onTap: () {
-                Navigator.pushNamed(context, '/scan'); // ✅ va a la pantalla
+                Navigator.pushNamed(context, '/scan');
               },
             ),
             ListTile(
               leading: const Icon(Icons.edit),
               title: const Text('Editar muro'),
               onTap: () {
-                // Por ahora solo simulado, más adelante implementamos
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Función Editar muro (próximamente)')),
-                );
+                Navigator.pushNamed(context, '/editor');
               },
             ),
             const Divider(),
@@ -58,4 +62,3 @@ class SettingsPage extends StatelessWidget {
     );
   }
 }
-

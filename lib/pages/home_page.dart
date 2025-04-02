@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_config.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -11,6 +12,8 @@ class HomePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Text("Muro: $wallName", style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/scan'),
               child: const Text('Escanear muro'),

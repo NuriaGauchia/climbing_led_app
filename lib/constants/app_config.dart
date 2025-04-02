@@ -1,0 +1,1 @@
+const String wallName = "BoulderReign Pro Board";
