@@ -129,6 +129,7 @@ class _HomePageState extends State<HomePage> {
                   itemCount: filteredRoutes.length,
                   itemBuilder: (context, index) {
                     final route = filteredRoutes[index];
+                    final realIndex = routes.indexOf(route);
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       child: ListTile(
@@ -155,24 +156,13 @@ class _HomePageState extends State<HomePage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => ViewRoutePage(route: route),
+                                    builder: (_) => ViewRoutePage(
+                                      route: route,
+                                      index: realIndex,
+                                    ),
                                   ),
                                 );
                               },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/edit',
-                                  arguments: {'index': routes.indexOf(route), 'route': route},
-                                );
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => confirmDelete(index),
                             ),
                           ],
                         ),

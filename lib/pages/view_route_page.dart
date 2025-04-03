@@ -3,11 +3,13 @@ import 'dart:convert';
 import '../models/route_model.dart';
 import '../models/wall_config_model.dart';
 import '../services/wall_config_service.dart';
+import '../services/route_storage_service.dart';
 
 class ViewRoutePage extends StatefulWidget {
   final ClimbingRoute route;
+  final int index;
 
-  const ViewRoutePage({super.key, required this.route});
+  const ViewRoutePage({super.key, required this.route, required this.index});
 
   @override
   State<ViewRoutePage> createState() => _ViewRoutePageState();
@@ -69,6 +71,16 @@ class _ViewRoutePageState extends State<ViewRoutePage> {
     };
   }
 
+  Future<void> deleteRoute() async {
+    await RouteStorageService.deleteRouteAtIndex(widget.index);
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bloque eliminado')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -101,17 +113,19 @@ class _ViewRoutePageState extends State<ViewRoutePage> {
                 const SizedBox(height: 4),
                 Text('Grado: ${widget.route.grade}', style: const TextStyle(fontSize: 16)),
                 const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    final json = generateLedJson(widget.route);
-                    debugPrint("Simulando envío a muro:");
-                    debugPrint(jsonEncode(json));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Comando JSON generado (ver consola)')),
-                    );
-                  },
-                  icon: const Icon(Icons.flash_on),
-                  label: const Text('Simular envío al muro'),
+                Center(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final json = generateLedJson(widget.route);
+                      debugPrint("Simulando envío a muro:");
+                      debugPrint(jsonEncode(json));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Comando JSON generado (ver consola)')),
+                      );
+                    },
+                    icon: const Icon(Icons.flash_on),
+                    label: const Text('Simular envío al muro'),
+                  ),
                 ),
               ],
             ),
@@ -141,6 +155,34 @@ class _ViewRoutePageState extends State<ViewRoutePage> {
               },
             ),
           ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/edit',
+                    arguments: {
+                      'index': widget.index,
+                      'route': widget.route,
+                    },
+                  );
+                },
+                icon: const Icon(Icons.edit),
+                label: const Text('Editar'),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton.icon(
+                onPressed: deleteRoute,
+                icon: const Icon(Icons.delete),
+                label: const Text('Eliminar'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
