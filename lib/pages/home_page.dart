@@ -54,34 +54,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> confirmDelete(int index) async {
-    final route = filteredRoutes[index];
-    final realIndex = routes.indexOf(route);
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar bloque?'),
-        content: Text('¿Seguro que quieres eliminar "${route.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await RouteStorageService.deleteRouteAtIndex(realIndex);
-      await loadRoutes();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,41 +102,42 @@ class _HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) {
                     final route = filteredRoutes[index];
                     final realIndex = routes.indexOf(route);
+
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      child: ListTile(
-                        title: Text(route.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Dificultad: ${route.grade} · Creador: ${route.creator}'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                route.done ? Icons.check_box : Icons.check_box_outline_blank,
-                                color: route.done ? Colors.green : null,
+                      child: InkWell(
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ViewRoutePage(route: route, index: realIndex),
+                            ),
+                          );
+                          if (result == true) {
+                            await loadRoutes(); // Recarga si se eliminó el bloque
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(route.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                    const SizedBox(height: 4),
+                                    Text('Creador: ${route.creator}'),
+                                  ],
+                                ),
                               ),
-                              onPressed: () async {
-                                final updated = route.copyWith(done: !route.done);
-                                final realIndex = routes.indexOf(route);
-                                await RouteStorageService.updateRouteAtIndex(realIndex, updated);
-                                await loadRoutes();
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.remove_red_eye),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ViewRoutePage(
-                                      route: route,
-                                      index: realIndex,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
+                              Chip(
+                                label: Text(route.grade),
+                                backgroundColor: Colors.grey[200],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );

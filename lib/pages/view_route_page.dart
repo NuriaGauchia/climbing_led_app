@@ -16,12 +16,14 @@ class ViewRoutePage extends StatefulWidget {
 }
 
 class _ViewRoutePageState extends State<ViewRoutePage> {
+  late ClimbingRoute route;
   WallConfig? wallConfig;
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    route = widget.route;
     loadWall();
   }
 
@@ -74,11 +76,19 @@ class _ViewRoutePageState extends State<ViewRoutePage> {
   Future<void> deleteRoute() async {
     await RouteStorageService.deleteRouteAtIndex(widget.index);
     if (mounted) {
-      Navigator.pop(context);
+      Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bloque eliminado')),
       );
     }
+  }
+
+  Future<void> toggleDone() async {
+    final updated = route.copyWith(done: !route.done);
+    await RouteStorageService.updateRouteAtIndex(widget.index, updated);
+    setState(() {
+      route = updated;
+    });
   }
 
   @override
@@ -98,7 +108,7 @@ class _ViewRoutePageState extends State<ViewRoutePage> {
 
     final totalCells = wallConfig!.rows * wallConfig!.cols;
     final activeCells = wallConfig!.activeCells;
-    final holds = widget.route.holds;
+    final holds = route.holds;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Ver bloque')),
@@ -109,14 +119,26 @@ class _ViewRoutePageState extends State<ViewRoutePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Nombre: ${widget.route.name}', style: const TextStyle(fontSize: 18)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Nombre: ${route.name}', style: const TextStyle(fontSize: 18)),
+                    IconButton(
+                      icon: Icon(
+                        route.done ? Icons.check_box : Icons.check_box_outline_blank,
+                        color: route.done ? Colors.green : null,
+                      ),
+                      onPressed: toggleDone,
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 4),
-                Text('Grado: ${widget.route.grade}', style: const TextStyle(fontSize: 16)),
+                Text('Grado: ${route.grade}', style: const TextStyle(fontSize: 16)),
                 const SizedBox(height: 16),
                 Center(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      final json = generateLedJson(widget.route);
+                      final json = generateLedJson(route);
                       debugPrint("Simulando envío a muro:");
                       debugPrint(jsonEncode(json));
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -166,7 +188,7 @@ class _ViewRoutePageState extends State<ViewRoutePage> {
                     '/edit',
                     arguments: {
                       'index': widget.index,
-                      'route': widget.route,
+                      'route': route,
                     },
                   );
                 },
