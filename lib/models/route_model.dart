@@ -1,31 +1,37 @@
+enum HoldType { start, path, finish, foot }
+
 class ClimbingRoute {
   final String name;
   final String grade;
-  final List<int> holds;
-  final String creator; // 👈 nuevo campo
+  final Map<int, HoldType> holds;
+  final String creator;
   final bool done;
 
   ClimbingRoute({
     required this.name,
     required this.grade,
     required this.holds,
-    required this.creator, // 👈 nuevo
+    required this.creator,
     this.done = false,
   });
 
   Map<String, dynamic> toJson() => {
         'name': name,
         'grade': grade,
-        'holds': holds,
-        'creator': creator, // 👈 nuevo
+        'holds': holds.map((key, value) => MapEntry(key.toString(), value.name)),
+        'creator': creator,
         'done': done,
       };
 
   factory ClimbingRoute.fromJson(Map<String, dynamic> json) => ClimbingRoute(
         name: json['name'],
         grade: json['grade'],
-        holds: List<int>.from(json['holds']),
-        creator: json['creator'] ?? 'Usuario Desconocido', // 👈 fallback por si faltara
+        holds: Map<String, String>.from(json['holds'])
+            .map((k, v) => MapEntry(
+                  int.parse(k),
+                  HoldType.values.firstWhere((e) => e.name == v, orElse: () => HoldType.path),
+                )),
+        creator: json['creator'] ?? 'Usuario Desconocido',
         done: json['done'] ?? false,
       );
 

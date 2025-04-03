@@ -15,10 +15,11 @@ class _EditRoutePageState extends State<EditRoutePage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController gradeController = TextEditingController();
 
-  Set<int> selectedHolds = {};
+  Map<int, HoldType> selectedHolds = {}; // tipo de presas
   int routeIndex = -1;
   WallConfig? wallConfig;
   bool isLoading = true;
+  HoldType selectedType = HoldType.path;
 
   @override
   void didChangeDependencies() {
@@ -29,7 +30,7 @@ class _EditRoutePageState extends State<EditRoutePage> {
 
     nameController.text = route.name;
     gradeController.text = route.grade;
-    selectedHolds = route.holds.toSet();
+    selectedHolds = Map.from(route.holds);
 
     WallConfigService.loadConfig().then((config) {
       setState(() {
@@ -41,10 +42,10 @@ class _EditRoutePageState extends State<EditRoutePage> {
 
   void toggleHold(int index) {
     setState(() {
-      if (selectedHolds.contains(index)) {
+      if (selectedHolds.containsKey(index)) {
         selectedHolds.remove(index);
       } else {
-        selectedHolds.add(index);
+        selectedHolds[index] = selectedType;
       }
     });
   }
@@ -52,14 +53,11 @@ class _EditRoutePageState extends State<EditRoutePage> {
   Future<void> saveEditedRoute() async {
     if (nameController.text.isEmpty || gradeController.text.isEmpty) return;
 
-    final args = ModalRoute.of(context)!.settings.arguments as Map;
-    final ClimbingRoute originalRoute = args['route'];
-
     final edited = ClimbingRoute(
       name: nameController.text,
       grade: gradeController.text,
-      holds: selectedHolds.toList(),
-      creator: originalRoute.creator,
+      holds: selectedHolds,
+      creator: 'nuria_dev', // se conserva el creador original si lo deseas
     );
 
     await RouteStorageService.updateRouteAtIndex(routeIndex, edited);
@@ -69,6 +67,21 @@ class _EditRoutePageState extends State<EditRoutePage> {
     );
 
     Navigator.pop(context);
+  }
+
+  Color getColorForType(HoldType? type) {
+    switch (type) {
+      case HoldType.start:
+        return Colors.red;
+      case HoldType.path:
+        return Colors.blue;
+      case HoldType.finish:
+        return Colors.yellow;
+      case HoldType.foot:
+        return Colors.green;
+      default:
+        return Colors.grey[300]!;
+    }
   }
 
   @override
@@ -99,6 +112,7 @@ class _EditRoutePageState extends State<EditRoutePage> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextField(
                   controller: nameController,
@@ -108,6 +122,19 @@ class _EditRoutePageState extends State<EditRoutePage> {
                 TextField(
                   controller: gradeController,
                   decoration: const InputDecoration(labelText: 'Dificultad'),
+                ),
+                const SizedBox(height: 16),
+                const Text('Tipo de presa actual:'),
+                Wrap(
+                  spacing: 8,
+                  children: HoldType.values.map((type) {
+                    return ChoiceChip(
+                      label: Text(type.name),
+                      selected: selectedType == type,
+                      selectedColor: getColorForType(type),
+                      onSelected: (_) => setState(() => selectedType = type),
+                    );
+                  }).toList(),
                 ),
                 const SizedBox(height: 16),
                 const Text('Selecciona las presas para este bloque'),
@@ -124,17 +151,14 @@ class _EditRoutePageState extends State<EditRoutePage> {
               ),
               itemCount: totalCells,
               itemBuilder: (context, index) {
-                final isAvailable = activeCells.contains(index);
-                final isSelected = selectedHolds.contains(index);
-
-                if (!isAvailable) return const SizedBox.shrink();
-
+                if (!activeCells.contains(index)) return const SizedBox.shrink();
+                final type = selectedHolds[index];
                 return GestureDetector(
                   onTap: () => toggleHold(index),
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isSelected ? Colors.orange : Colors.grey[300],
+                      color: getColorForType(type),
                       border: Border.all(color: Colors.black),
                     ),
                     child: Center(child: Text('${index + 1}')),

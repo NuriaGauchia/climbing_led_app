@@ -12,19 +12,21 @@ class CreateRoutePage extends StatefulWidget {
 }
 
 class _CreateRoutePageState extends State<CreateRoutePage> {
-  final Set<int> selectedHolds = {};
   final TextEditingController nameController = TextEditingController();
   final TextEditingController gradeController = TextEditingController();
 
   WallConfig? wallConfig;
   bool isLoading = true;
 
+  final Map<int, HoldType> selectedHolds = {}; // nuevo formato
+  HoldType selectedType = HoldType.path; // tipo por defecto
+
   final List<String> grades = [
     '?',
     'V+',
     '6a', '6a+',
     '6b', '6b+',
-    '6c', '6c/+', '6c+',
+    '6c', '6c+',
     '7a', '7a+',
     '7b', '7b+',
     '7c', '7c+',
@@ -50,10 +52,10 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
 
   void toggleHold(int index) {
     setState(() {
-      if (selectedHolds.contains(index)) {
+      if (selectedHolds.containsKey(index)) {
         selectedHolds.remove(index);
       } else {
-        selectedHolds.add(index);
+        selectedHolds[index] = selectedType;
       }
     });
   }
@@ -69,8 +71,8 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
     final route = ClimbingRoute(
       name: nameController.text,
       grade: gradeController.text,
-      holds: selectedHolds.toList(),
-      creator: 'nuria_dev', // 👈 Simulación temporal
+      holds: selectedHolds,
+      creator: 'nuria_dev',
     );
 
     await RouteStorageService.saveRoute(route);
@@ -80,6 +82,21 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
     );
 
     Navigator.pop(context, true);
+  }
+
+  Color getColorForType(HoldType? type) {
+    switch (type) {
+      case HoldType.start:
+        return Colors.red;
+      case HoldType.path:
+        return Colors.blue;
+      case HoldType.finish:
+        return Colors.yellow;
+      case HoldType.foot:
+        return Colors.green;
+      default:
+        return Colors.grey[300]!;
+    }
   }
 
   @override
@@ -92,18 +109,9 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
 
     if (wallConfig == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Crear nuevo bloque'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
+        appBar: AppBar(title: const Text('Crear nuevo bloque')),
         body: const Center(
-          child: Text(
-            'Primero debes escanear y configurar el muro en Ajustes.',
-            textAlign: TextAlign.center,
-          ),
+          child: Text('Primero debes escanear y configurar el muro en Ajustes.'),
         ),
       );
     }
@@ -112,13 +120,7 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
     final activeCells = wallConfig!.activeCells;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Crear nuevo bloque'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Crear nuevo bloque')),
       body: Column(
         children: [
           Padding(
@@ -137,26 +139,24 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
                     width: 160,
                     child: DropdownButtonFormField<String>(
                       value: gradeController.text.isNotEmpty ? gradeController.text : null,
-                      items: grades.map((grade) {
-                        return DropdownMenuItem(
-                          value: grade,
-                          child: Text(grade),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            gradeController.text = value;
-                          });
-                        }
-                      },
-                      decoration: const InputDecoration(
-                        labelText: 'Dificultad',
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                      ),
+                      items: grades.map((grade) => DropdownMenuItem(value: grade, child: Text(grade))).toList(),
+                      onChanged: (value) => setState(() => gradeController.text = value!),
+                      decoration: const InputDecoration(labelText: 'Dificultad'),
                     ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Tipo de presa actual:'),
+                Wrap(
+                  spacing: 8,
+                  children: HoldType.values.map((type) {
+                    return ChoiceChip(
+                      label: Text(type.name),
+                      selected: selectedType == type,
+                      selectedColor: getColorForType(type),
+                      onSelected: (_) => setState(() => selectedType = type),
+                    );
+                  }).toList(),
                 ),
                 const SizedBox(height: 16),
                 const Text('Toca las presas activas para seleccionarlas'),
@@ -173,19 +173,14 @@ class _CreateRoutePageState extends State<CreateRoutePage> {
               ),
               itemCount: totalCells,
               itemBuilder: (context, index) {
-                final isAvailable = activeCells.contains(index);
-                final isSelected = selectedHolds.contains(index);
-
-                if (!isAvailable) {
-                  return const SizedBox.shrink();
-                }
-
+                if (!activeCells.contains(index)) return const SizedBox.shrink();
+                final type = selectedHolds[index];
                 return GestureDetector(
                   onTap: () => toggleHold(index),
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isSelected ? Colors.green : Colors.grey[300],
+                      color: getColorForType(type),
                       border: Border.all(color: Colors.black),
                     ),
                     child: Center(child: Text('${index + 1}')),
