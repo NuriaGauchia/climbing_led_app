@@ -4,6 +4,7 @@ import '../services/route_storage_service.dart';
 import '../filters/route_filter.dart';
 import '../widgets/filter_modal.dart';
 import '../constants/grades.dart';
+import 'view_route_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -146,6 +147,17 @@ class _HomePageState extends State<HomePage> {
                                 final realIndex = routes.indexOf(route);
                                 await RouteStorageService.updateRouteAtIndex(realIndex, updated);
                                 await loadRoutes();
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.remove_red_eye),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ViewRoutePage(route: route),
+                                  ),
+                                );
                               },
                             ),
                             IconButton(
